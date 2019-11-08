@@ -32,5 +32,7 @@ namespace GaussElimination
         public FloatBox ParseInt(int a) => new FloatBox(1.0f * a);
 
         public bool GreaterThan(FloatBox b) => _value > b._value;
+
+        public override string ToString() => _value.ToString();
     }
 }

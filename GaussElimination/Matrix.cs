@@ -6,16 +6,22 @@ namespace GaussElimination
     {
         private readonly Number<T>[,] _initialMatrix;
         private Number<T>[,] _matrix;
+        private int[] _variables;
+        private Number<T>[] _output;
 
         public Matrix(Number<T>[,] matrix)
         {
             _initialMatrix = matrix;
-            _matrix = _initialMatrix;
+            _matrix = (Number<T>[,])_initialMatrix.Clone();
         }
 
         public Matrix<T> Solve(Func<Number<T>[,], int, (int, int)> choseNext)
         {
-            _matrix = _initialMatrix;
+            _matrix = (Number<T>[,])_initialMatrix.Clone();
+            _variables = new int[_matrix.GetLength(0)];
+            _output = new Number<T>[_matrix.GetLength(0)];
+            for (var i = 0; i < _variables.Length; i++)
+                _variables[i] = i;
 
             for (var i = 0; i < _matrix.GetLength(0); i++)
             {
@@ -27,10 +33,13 @@ namespace GaussElimination
                 {
                     Eliminate(_matrix, j, i);
                 }
-
             }
             //
-            //
+            for(var i = 0; i < _output.Length; i++)
+            {
+                var position = _variables[i];
+                _output[i] = _matrix[position, _matrix.GetLength(1) - 1] / _matrix[position, position];
+            }
             return this;
         }
 
@@ -69,6 +78,30 @@ namespace GaussElimination
         {
             for (var i = 0; i < matrix.GetLength(1); i++)
                 matrix[index, i] = multiplier * matrix[index, i];
+        }
+
+        private static (Number<T> absolute, Number<T> relative) CalculateErrors(int rowIndex, Number<T>[,] matrix, Number<T>[] outputVector)
+        {
+            var expectedResult = matrix[rowIndex, matrix.GetLength(1) - 1];
+
+            var actualResult = new Number<T>(0);
+            for (var i = 0; i < outputVector.Length; i++)
+                actualResult += matrix[rowIndex, i] * outputVector[i];
+
+            var absoluteError = expectedResult - actualResult;
+            return (absoluteError, absoluteError/expectedResult);
+        }
+
+        public Number<T> GetTotalRelativeError(Func<Number<T>, Number<T>> errorCalculation)
+        {
+            var total = new Number<T>(0);
+            for(var i = 0; i < _output.Length; i++)
+            {
+                var error = CalculateErrors(i, _initialMatrix, _output).relative;
+                total += errorCalculation(error);
+            }
+
+            return total;
         }
 
         #region Generators

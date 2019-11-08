@@ -50,5 +50,10 @@ namespace GaussElimination
 
         public Number<T> Negate() => this * new Number<T>(-1);
 
+        public Number<T> Absolute() =>
+            Value.GreaterThan(new Number<T>(0).Value)
+                ? this
+                : this * new Number<T>(-1);
+
     }
 }
