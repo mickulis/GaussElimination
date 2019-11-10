@@ -9,23 +9,23 @@ namespace GaussElimination
 
         public static (int, int) Partial<T>(Number<T>[,] matrix, int initialIndex) where T : ICalculateable<T>, new()
         {
-            var col = initialIndex;
-            for (var i = initialIndex; i < matrix.GetLength(0); i++)
-                if (matrix[i, initialIndex] > matrix[col, initialIndex])
-                    col = i;
+            var maxRow = initialIndex;
+            for (var currentRow = initialIndex; currentRow < matrix.GetLength(0); currentRow++)
+                if (matrix[currentRow, initialIndex].Absolute() > matrix[maxRow, initialIndex].Absolute())
+                    maxRow = currentRow;
 
-            return (col, initialIndex);
+            return (maxRow, initialIndex);
         }
 
         public static (int, int) Full<T>(Number<T>[,] matrix, int initialIndex) where T : ICalculateable<T>, new()
         {
-            var (col, row) = (initialIndex, initialIndex);
-            for (var i = initialIndex; i < matrix.GetLength(0); i++)
-                for (var j = initialIndex; j < matrix.GetLength(0); j++)
-                    if (matrix[j, i] > matrix[col, row])
-                        (col, row) = (i, j);
+            var (maxRow, maxColumn) = (initialIndex, initialIndex);
+            for (var currentColumn = initialIndex; currentColumn < matrix.GetLength(0); currentColumn++)
+                for (var currentRow = initialIndex; currentRow < matrix.GetLength(0); currentRow++)
+                    if (matrix[currentRow, currentColumn].Absolute() > matrix[maxRow, maxColumn].Absolute())
+                        (maxRow, maxColumn) = (currentRow, currentColumn);
 
-            return (col, row);
+            return (maxRow, maxColumn);
         }
     }
 }

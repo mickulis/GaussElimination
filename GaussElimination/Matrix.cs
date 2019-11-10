@@ -10,6 +10,7 @@ namespace GaussElimination
         private Number<T>[,] _matrix;
         private int[] _variables;
         private Number<T>[] _output;
+        public static bool debugInfo = false;
 
         public Matrix(Number<T>[,] matrix)
         {
@@ -27,27 +28,41 @@ namespace GaussElimination
 
             for (var i = 0; i < _matrix.GetLength(0); i++)
             {
-                var (nextColumn, nextRow) = choseNext(_matrix, i);
+                if (debugInfo)
+                {
+                    Console.WriteLine("Next loop");
+                    Print();
+                }
+
+                var (nextRow, nextColumn) = choseNext(_matrix, i);
                 if (nextColumn != i)
                 {
-
-                    //Console.WriteLine($"Swap columns: {i}, {nextColumn} -----------------");
+                    if (debugInfo)
+                        Console.WriteLine($"Swap columns: {i}, {nextColumn} -----------------");
 
                     SwapColumns(i, nextColumn, _matrix, _variables);
-                    Print();
-                    Console.WriteLine("/////////////////////////////");
+                    if (debugInfo)
+                    {
+                        Print();
+                        Console.WriteLine("/////////////////////////////");
+                    }
                 }
 
                 if(nextRow != i)
                 {
-
-                    Console.WriteLine($"Swap rows: {i}, {nextRow} -----------------");
+                    if (debugInfo)
+                        Console.WriteLine($"Swap rows: {i}, {nextRow} -----------------");
 
                     SwapRows(i, nextRow, _matrix);
-                    Print();
-                    Console.WriteLine("/////////////////////////////");
+                    if (debugInfo)
+                    {
+                        Print();
+                        Console.WriteLine("/////////////////////////////");
+                    }
                 }
 
+                if(debugInfo)
+                    Console.WriteLine($"Subtracting {i} row from others");
 
                 for (var j = 0; j < _matrix.GetLength(0); j++)
                 {
@@ -58,8 +73,11 @@ namespace GaussElimination
             for(var i = 0; i < _output.Length; i++)
             {
                 var position = _variables[i];
-                _output[i] = _matrix[position, _matrix.GetLength(1) - 1] / _matrix[position, position];
+                _output[position] = _matrix[i, _matrix.GetLength(1) - 1] / _matrix[i, i];
             }
+            if(debugInfo)
+                Print();
+
             return this;
         }
 
@@ -112,28 +130,33 @@ namespace GaussElimination
                 matrix[index, i] = multiplier * matrix[index, i];
         }
 
-        private static (Number<T> absolute, Number<T> relative) CalculateErrors(int rowIndex, Number<T>[,] matrix, Number<T>[] outputVector)
-        {
-            var expectedResult = matrix[rowIndex, matrix.GetLength(1) - 1];
-
-            var actualResult = new Number<T>(0);
-            for (var i = 0; i < outputVector.Length; i++)
-                actualResult += matrix[rowIndex, i] * outputVector[i];
-
-            var absoluteError = expectedResult - actualResult;
-            return (absoluteError, absoluteError/expectedResult);
-        }
-
         public Number<T> GetTotalRelativeError(Func<Number<T>, Number<T>> errorSumMethod)
         {
             var total = new Number<T>(0);
+            var result = Multiply(_initialMatrix, _output);
             for(var i = 0; i < _output.Length; i++)
             {
-                var error = CalculateErrors(i, _initialMatrix, _output).relative.Absolute();
+                var expectedResult = _initialMatrix[i, _initialMatrix.GetLength(1) - 1];
+                var actualResult = result[i];
+                var error = (actualResult - expectedResult) / expectedResult;
                 total += errorSumMethod(error);
             }
-
             return total;
+        }
+
+        public static Number<T>[] Multiply(Number<T>[,] matrix, Number<T>[] vector)
+        {
+            var output = new Number<T>[vector.Length];
+
+            for (var row = 0; row < output.Length; row++)
+            {
+                var result = new Number<T>(0);
+                for (var column = 0; column < output.Length; column++)
+                    result += matrix[row, column] * vector[column];
+                output[row] = result;
+            }
+
+            return output;
         }
 
         #region Generators
@@ -167,6 +190,9 @@ namespace GaussElimination
 
         public void Print()
         {
+            for (var i = 0; i < _variables.Length; i++)
+                Console.Write($"x{_variables[i]} ");
+            Console.WriteLine();
             for (var y = 0; y < _matrix.GetLength(0); y++)
             {
                 for (var x = 0; x < _matrix.GetLength(1); x++)
@@ -175,6 +201,8 @@ namespace GaussElimination
                 }
                 Console.WriteLine();
             }
+            Console.WriteLine();
+
         }
     }
 }
