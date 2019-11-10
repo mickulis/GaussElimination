@@ -18,7 +18,7 @@ namespace GaussElimination
             _matrix = (Number<T>[,])_initialMatrix.Clone();
         }
 
-        public Matrix<T> Solve(Func<Number<T>[,], int, (int, int)> choseNext)
+        public Matrix<T> Solve(Func<Number<T>[,], int, (int, int)> choseNextPivot)
         {
             _matrix = (Number<T>[,])_initialMatrix.Clone();
             _variables = new int[_matrix.GetLength(0)];
@@ -34,7 +34,7 @@ namespace GaussElimination
                     Print();
                 }
 
-                var (nextRow, nextColumn) = choseNext(_matrix, i);
+                var (nextRow, nextColumn) = choseNextPivot(_matrix, i);
                 if (nextColumn != i)
                 {
                     if (debugInfo)

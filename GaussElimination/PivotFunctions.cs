@@ -1,9 +1,24 @@
 using System;
+using System.Diagnostics;
+using System.Dynamic;
 
 namespace GaussElimination
 {
     public static class PivotFunctions
     {
+        public static Func<Number<T>[,], int, (int, int)> Get<T>(PivotChoiceMethod method)
+            where T : ICalculateable<T>, new()
+        {
+            switch (method)
+            {
+                case PivotChoiceMethod.Simple: return Simple;
+                case PivotChoiceMethod.Partial: return Partial;
+                case PivotChoiceMethod.Full: return Full;
+            }
+            throw new ArgumentException("Invalid method");
+        }
+
+
         public static (int, int) Simple<T>(Number<T>[,] matrix, int initialIndex) where T : ICalculateable<T>, new() =>
             (initialIndex, initialIndex);
 

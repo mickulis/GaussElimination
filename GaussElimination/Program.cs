@@ -1,4 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Xml.Linq;
 
 namespace GaussElimination
 {
@@ -6,26 +10,57 @@ namespace GaussElimination
     {
         static void Main(string[] args)
         {
-            int o = 3;
-            for (int i = 3; i <= 100; i++)
+            for (var i = 3; i <= 20; i++)
             {
-                var watch = System.Diagnostics.Stopwatch.StartNew();
-                var matrix = Matrix<Rational>.GenerateRandomEquationMatrix(i, 3).Solve(PivotFunctions.Simple);
-                watch.Stop();
-                Console.WriteLine($"{i} Simple: {(watch.ElapsedMilliseconds/1000).ToString()} // error: {matrix.GetTotalRelativeError(x => x * x)}");
+                if (i < 100 || i % 10 == 0)
+                {
+                    Console.Out.WriteLine(i);
+                    try
+                    {
+                        var output = new List<(long time, string error, string info)>();
+                        output.Add(SolveRandomSetOfEquations<Rational>(i, i, PivotChoiceMethod.Simple));
+                        output.Add(SolveRandomSetOfEquations<DoubleBox>(i, i, PivotChoiceMethod.Simple));
+                        output.Add(SolveRandomSetOfEquations<FloatBox>(i, i, PivotChoiceMethod.Simple));
 
-                watch = System.Diagnostics.Stopwatch.StartNew();
-                var matrix2 = Matrix<Rational>.GenerateRandomEquationMatrix(i, 3).Solve(PivotFunctions.Partial);
-                watch.Stop();
+                        output.Add(SolveRandomSetOfEquations<Rational>(i, i, PivotChoiceMethod.Partial));
+                        output.Add(SolveRandomSetOfEquations<DoubleBox>(i, i, PivotChoiceMethod.Partial));
+                        output.Add(SolveRandomSetOfEquations<FloatBox>(i, i, PivotChoiceMethod.Partial));
 
-                Console.WriteLine($"{i} Partial: {(watch.ElapsedMilliseconds/1000).ToString()} // error: {matrix2.GetTotalRelativeError(x => x * x)}");
+                        output.Add(SolveRandomSetOfEquations<Rational>(i, i, PivotChoiceMethod.Full));
+                        output.Add(SolveRandomSetOfEquations<DoubleBox>(i, i, PivotChoiceMethod.Full));
+                        output.Add(SolveRandomSetOfEquations<FloatBox>(i, i, PivotChoiceMethod.Full));
 
-                //Matrix<Rational>.debugInfo = true;
-                watch = System.Diagnostics.Stopwatch.StartNew();
-                var matrix3 = Matrix<Rational>.GenerateRandomEquationMatrix(i, 3).Solve(PivotFunctions.Full);
-                watch.Stop();
+                        Save(output, i);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
+                }
+            }
+        }
 
-                Console.WriteLine($"{i} Full: {(watch.ElapsedMilliseconds/1000).ToString()} // error: {matrix3.GetTotalRelativeError(x => x * x)}");
+        private static (long time, string error, string info) SolveRandomSetOfEquations<T>(int i, int seed, PivotChoiceMethod method) where T : ICalculateable<T>, new()
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            var matrix = Matrix<T>.GenerateRandomEquationMatrix(i, seed).Solve(PivotFunctions.Get<T>(method));
+            watch.Stop();
+            var error = matrix.GetTotalRelativeError(x => x * x);
+//            Console.WriteLine(
+//                $"Type: {typeof(T)}, size: {i},  method: {method} -> {(1.0f * watch.ElapsedMilliseconds / 1000).ToString()} // error: {error}");
+            return (watch.ElapsedMilliseconds, error.ToString(), $"Type: {typeof(T)}, size: {i},  method: {method}");
+        }
+
+        private static void Save(List<(long time, string error, string info)> list, int size)
+        {
+            using (StreamWriter w = File.AppendText("output.csv"))
+            {
+                var outputLine = $"{size}";
+                foreach ((var time, var error, var info) in list)
+                {
+                    outputLine = $"{outputLine}; {time}; {error}";
+                }
+                w.WriteLine(outputLine);
             }
         }
     }
