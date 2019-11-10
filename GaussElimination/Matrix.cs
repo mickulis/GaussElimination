@@ -1,4 +1,6 @@
 using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace GaussElimination
 {
@@ -25,16 +27,34 @@ namespace GaussElimination
 
             for (var i = 0; i < _matrix.GetLength(0); i++)
             {
-                var next = choseNext(_matrix, i);
-                // if next not in (i, i) position, swap
+                var (nextColumn, nextRow) = choseNext(_matrix, i);
+                if (nextColumn != i)
+                {
 
-                // subtract row from all other rows with correct multiplier + zero i-th column
+                    //Console.WriteLine($"Swap columns: {i}, {nextColumn} -----------------");
+
+                    SwapColumns(i, nextColumn, _matrix, _variables);
+                    Print();
+                    Console.WriteLine("/////////////////////////////");
+                }
+
+                if(nextRow != i)
+                {
+
+                    Console.WriteLine($"Swap rows: {i}, {nextRow} -----------------");
+
+                    SwapRows(i, nextRow, _matrix);
+                    Print();
+                    Console.WriteLine("/////////////////////////////");
+                }
+
+
                 for (var j = 0; j < _matrix.GetLength(0); j++)
                 {
                     Eliminate(_matrix, j, i);
                 }
             }
-            //
+
             for(var i = 0; i < _output.Length; i++)
             {
                 var position = _variables[i];
@@ -56,16 +76,28 @@ namespace GaussElimination
             matrix[targetRowIndex, pivotColumn] = new Number<T>(0);    // in some cases b - a*(b/a) might not produce exact 0 and without this the errors would be even higher
         }
 
-        private static void SwapRows(int firstIndex, int secondIndex, Number<T>[,] matrix)
+        private static void SwapRows(int firstRowIndex, int secondRowIndex, Number<T>[,] matrix)
         {
-            var matrixWidth = matrix.GetLength(1);
-            var intSize = sizeof(int);
-            var rowSize = intSize * matrixWidth;
+            for (var i = 0; i < matrix.GetLength(1); i++)
+            {
+                var temp = matrix[firstRowIndex, i];
+                matrix[firstRowIndex, i] = matrix[secondRowIndex, i];
+                matrix[secondRowIndex, i] = temp;
+            }
+        }
 
-            var tempRow = new Number<T>[matrixWidth];
-            Buffer.BlockCopy(matrix, firstIndex*rowSize, tempRow, 0, rowSize);
-            Buffer.BlockCopy(matrix, secondIndex*rowSize, matrix, firstIndex*rowSize, rowSize);
-            Buffer.BlockCopy(tempRow, 0, matrix, secondIndex*rowSize, rowSize);
+        private static void SwapColumns(int firstColumnIndex, int secondColumnIndex, Number<T>[,] matrix, int[] variables)
+        {
+            for (var i = 0; i < matrix.GetLength(0); i++)
+            {
+                var temp = matrix[i, firstColumnIndex];
+                matrix[i, firstColumnIndex] = matrix[i, secondColumnIndex];
+                matrix[i, secondColumnIndex] = temp;
+            }
+
+            var tempVariable = variables[firstColumnIndex];
+            variables[firstColumnIndex] = variables[secondColumnIndex];
+            variables[secondColumnIndex] = tempVariable;
         }
 
         private static void AddRows(int sourceRowIndex, int targetRowIndex, Number<T> multiplier, Number<T>[,] matrix)
@@ -92,13 +124,13 @@ namespace GaussElimination
             return (absoluteError, absoluteError/expectedResult);
         }
 
-        public Number<T> GetTotalRelativeError(Func<Number<T>, Number<T>> errorCalculation)
+        public Number<T> GetTotalRelativeError(Func<Number<T>, Number<T>> errorSumMethod)
         {
             var total = new Number<T>(0);
             for(var i = 0; i < _output.Length; i++)
             {
-                var error = CalculateErrors(i, _initialMatrix, _output).relative;
-                total += errorCalculation(error);
+                var error = CalculateErrors(i, _initialMatrix, _output).relative.Absolute();
+                total += errorSumMethod(error);
             }
 
             return total;
@@ -114,6 +146,18 @@ namespace GaussElimination
             for(var x = 0; x < size + 1; x++)
                 for(var y = 0; y < size; y++)
                     matrix[y, x] = new Number<T>(rng.Next(int.MinValue, int.MaxValue), int.MaxValue);
+
+            return new Matrix<T>(matrix);
+        }
+
+        public static Matrix<T> GenerateRandomEquationMatrixTEST(int size, int seed, int min, int max)
+        {
+            var rng = new Random(seed);
+            var matrix = new Number<T>[size, size + 1];
+
+            for(var x = 0; x < size + 1; x++)
+            for(var y = 0; y < size; y++)
+                matrix[y, x] = new Number<T>(rng.Next(min, max), 1);
 
             return new Matrix<T>(matrix);
         }

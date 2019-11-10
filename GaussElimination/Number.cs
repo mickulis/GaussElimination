@@ -54,6 +54,5 @@ namespace GaussElimination
             Value.GreaterThan(new Number<T>(0).Value)
                 ? this
                 : this * new Number<T>(-1);
-
     }
 }

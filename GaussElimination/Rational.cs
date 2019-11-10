@@ -6,8 +6,8 @@ namespace GaussElimination
 {
     public class Rational : ICalculateable<Rational>
     {
-        private readonly BigInteger _numerator;
-        private readonly BigInteger _denominator;
+        public readonly BigInteger _numerator;
+        public readonly BigInteger _denominator;
 
         #region Constructors
 
