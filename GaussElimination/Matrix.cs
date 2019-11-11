@@ -120,7 +120,7 @@ namespace GaussElimination
 
         private static void AddRows(int sourceRowIndex, int targetRowIndex, Number<T> multiplier, Number<T>[,] matrix)
         {
-            for (var i = 0; i < matrix.GetLength(1); i++)
+            for (var i = sourceRowIndex; i < matrix.GetLength(1); i++)
                 matrix[targetRowIndex, i] += matrix[sourceRowIndex, i] * multiplier;
         }
 

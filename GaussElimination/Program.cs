@@ -10,7 +10,14 @@ namespace GaussElimination
     {
         static void Main(string[] args)
         {
-            for (var i = 3; i <= 20; i++)
+            //CalculateAll();
+            var output = SolveRandomSetOfEquations<Rational>(500, 3, PivotChoiceMethod.Simple);
+            Console.Out.WriteLine($"time: {output.time}, error: {output.error}");
+        }
+
+        private static void CalculateAll()
+        {
+            for (var i = 3; i <= 5000; i++)
             {
                 if (i < 100 || i % 10 == 0)
                 {
@@ -42,8 +49,9 @@ namespace GaussElimination
 
         private static (long time, string error, string info) SolveRandomSetOfEquations<T>(int i, int seed, PivotChoiceMethod method) where T : ICalculateable<T>, new()
         {
+            var matrix = Matrix<T>.GenerateRandomEquationMatrix(i, seed);
             var watch = System.Diagnostics.Stopwatch.StartNew();
-            var matrix = Matrix<T>.GenerateRandomEquationMatrix(i, seed).Solve(PivotFunctions.Get<T>(method));
+            matrix = matrix.Solve(PivotFunctions.Get<T>(method));
             watch.Stop();
             var error = matrix.GetTotalRelativeError(x => x * x);
 //            Console.WriteLine(
@@ -53,7 +61,7 @@ namespace GaussElimination
 
         private static void Save(List<(long time, string error, string info)> list, int size)
         {
-            using (StreamWriter w = File.AppendText("output.csv"))
+            using (StreamWriter w = File.AppendText("output_optimized_without_timing_generation.csv"))
             {
                 var outputLine = $"{size}";
                 foreach ((var time, var error, var info) in list)
