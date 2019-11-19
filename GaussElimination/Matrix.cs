@@ -26,43 +26,11 @@ namespace GaussElimination
             for (var i = 0; i < _variables.Length; i++)
                 _variables[i] = i;
 
+
             for (var i = 0; i < _matrix.GetLength(0); i++)
             {
-                if (debugInfo)
-                {
-                    Console.WriteLine("Next loop");
-                    Print();
-                }
-
                 var (nextRow, nextColumn) = choseNextPivot(_matrix, i);
-                if (nextColumn != i)
-                {
-                    if (debugInfo)
-                        Console.WriteLine($"Swap columns: {i}, {nextColumn} -----------------");
-
-                    SwapColumns(i, nextColumn, _matrix, _variables);
-                    if (debugInfo)
-                    {
-                        Print();
-                        Console.WriteLine("/////////////////////////////");
-                    }
-                }
-
-                if(nextRow != i)
-                {
-                    if (debugInfo)
-                        Console.WriteLine($"Swap rows: {i}, {nextRow} -----------------");
-
-                    SwapRows(i, nextRow, _matrix);
-                    if (debugInfo)
-                    {
-                        Print();
-                        Console.WriteLine("/////////////////////////////");
-                    }
-                }
-
-                if(debugInfo)
-                    Console.WriteLine($"Subtracting {i} row from others");
+                MovePivot(nextColumn, i, nextRow);
 
                 for (var j = 0; j < _matrix.GetLength(0); j++)
                 {
@@ -70,15 +38,28 @@ namespace GaussElimination
                 }
             }
 
-            for(var i = 0; i < _output.Length; i++)
+            GenerateOutput();
+
+            return this;
+        }
+
+        private void GenerateOutput()
+        {
+            for (var i = 0; i < _output.Length; i++)
             {
                 var position = _variables[i];
                 _output[position] = _matrix[i, _matrix.GetLength(1) - 1] / _matrix[i, i];
             }
-            if(debugInfo)
-                Print();
+        }
 
-            return this;
+        private void MovePivot(int nextColumn, int i, int nextRow)
+        {
+            if (nextColumn != i)
+                SwapColumns(i, nextColumn, _matrix, _variables);
+
+            if (nextRow != i)
+                SwapRows(i, nextRow, _matrix);
+
         }
 
         private static void Eliminate(Number<T>[,] matrix, int targetRowIndex, int sourceRowIndex)
@@ -124,12 +105,6 @@ namespace GaussElimination
                 matrix[targetRowIndex, i] += matrix[sourceRowIndex, i] * multiplier;
         }
 
-        private static void MultiplyRow(int index, Number<T> multiplier, Number<T>[,] matrix)
-        {
-            for (var i = 0; i < matrix.GetLength(1); i++)
-                matrix[index, i] = multiplier * matrix[index, i];
-        }
-
         public Number<T> GetTotalRelativeError(Func<Number<T>, Number<T>> errorSumMethod)
         {
             var total = new Number<T>(0);
@@ -173,7 +148,7 @@ namespace GaussElimination
             return new Matrix<T>(matrix);
         }
 
-        public static Matrix<T> GenerateRandomEquationMatrixTEST(int size, int seed, int min, int max)
+        public static Matrix<T> GenerateRandomEquationMatrixOfIntegers(int size, int seed, int min, int max)
         {
             var rng = new Random(seed);
             var matrix = new Number<T>[size, size + 1];

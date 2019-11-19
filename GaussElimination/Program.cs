@@ -11,13 +11,62 @@ namespace GaussElimination
         static void Main(string[] args)
         {
             //CalculateAll();
-            var output = SolveRandomSetOfEquations<Rational>(500, 3, PivotChoiceMethod.Simple);
-            Console.Out.WriteLine($"time: {output.time}, error: {output.error}");
+            CalculateAverageErrors();
+        }
+
+        private static void CalculateAverageErrors()
+        {
+            for (var i = 1; i < 500; i++)
+            {
+                using (StreamWriter w = File.AppendText("sum_of_errors.csv"))
+                {
+                    Console.Out.WriteLine(i);
+                    var doubleTotalSimple = new DoubleBox(0);
+                    var doubleTotalPartial = new DoubleBox(0);
+                    var doubleTotalFull = new DoubleBox(0);
+
+                    var floatTotalSimple = new FloatBox(0);
+                    var floatTotalPartial = new FloatBox(0);
+                    var floatTotalFull = new FloatBox(0);
+                    for (var j = 0; j < 10; j++)
+                    {
+                        var doubleErrorSimple = SolveAndGetError<DoubleBox>(i, j, PivotChoiceMethod.Simple);
+                        doubleTotalSimple = doubleTotalSimple.Add(doubleErrorSimple);
+
+                        var doubleErrorPartial = SolveAndGetError<DoubleBox>(i, j, PivotChoiceMethod.Partial);
+                        doubleTotalPartial = doubleTotalPartial.Add(doubleErrorPartial);
+
+                        var doubleErrorFull = SolveAndGetError<DoubleBox>(i, j, PivotChoiceMethod.Full);
+                        doubleTotalFull = doubleTotalFull.Add(doubleErrorFull);
+
+                        var floatErrorSimple = SolveAndGetError<FloatBox>(i, j, PivotChoiceMethod.Simple);
+                        floatTotalSimple = floatTotalSimple.Add(floatErrorSimple);
+
+                        var floatErrorPartial = SolveAndGetError<FloatBox>(i, j, PivotChoiceMethod.Partial);
+                        floatTotalPartial = floatTotalPartial.Add(floatErrorPartial);
+
+                        var floatErrorFull = SolveAndGetError<FloatBox>(i, j, PivotChoiceMethod.Full);
+                        floatTotalFull = floatTotalFull.Add(floatErrorFull);
+                    }
+
+                    var outputLine =
+                        $"{i}; {doubleTotalSimple}; {doubleTotalPartial}; {doubleTotalFull};{floatTotalSimple}; {floatTotalPartial}; {floatTotalFull}";
+                    w.WriteLine(outputLine);
+                }
+            }
+        }
+
+        private static T SolveAndGetError<T>(int i, int seed, PivotChoiceMethod method) where T : ICalculateable<T>, new()
+        {
+            var matrix = Matrix<T>.GenerateRandomEquationMatrix(i, seed);
+            matrix = matrix.Solve(PivotFunctions.Get<T>(method));
+            var error = matrix.GetTotalRelativeError(x => x*x);
+            return error.Absolute().Value;
         }
 
         private static void CalculateAll()
         {
-            for (var i = 3; i <= 5000; i++)
+            for (var i = 1; i <= 500; i++)
             {
                 if (i < 100 || i % 10 == 0)
                 {
@@ -54,8 +103,6 @@ namespace GaussElimination
             matrix = matrix.Solve(PivotFunctions.Get<T>(method));
             watch.Stop();
             var error = matrix.GetTotalRelativeError(x => x * x);
-//            Console.WriteLine(
-//                $"Type: {typeof(T)}, size: {i},  method: {method} -> {(1.0f * watch.ElapsedMilliseconds / 1000).ToString()} // error: {error}");
             return (watch.ElapsedMilliseconds, error.ToString(), $"Type: {typeof(T)}, size: {i},  method: {method}");
         }
 
